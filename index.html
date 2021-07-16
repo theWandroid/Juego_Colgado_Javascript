@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activitat Penjat</title>
+    <link rel="shortcut icon" href="http://thewandroid.com/favicon/low-loly-panda.png" type="image/png">
+    <style>
+body{
+    padding: 0;
+    margin: 0;
+    background-image: url(http://thewandroid.com/texture/animals-texture/animals-texture-6.jpg);
+}
+
+        #container {
+            width: 500px;
+            margin: 50px auto;
+            display: flex;
+            flex-direction: column;
+            background-color: #fdc;
+            height: 80vh;
+            box-shadow: 20px 20px 5px #000;
+            border: solid 10px #fbb;
+        }
+
+        #container div {
+            width: 200px;
+            height: 212px;
+            background-image: url(./img/hangman-game_pm-1024x212.png);
+            background-position: left;
+            margin: auto;
+        }
+
+        h1{
+            background-color: #f77;
+            margin: 0;
+            padding: 10px;
+            color: #fff;
+        }
+
+        h1,
+        h2,
+        h3 {
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        h3 {
+            font-size: 5rem;
+            color: #f00;
+        }
+
+        #evaluate, #reset  {
+            text-transform: uppercase;
+            padding: 10px;
+            margin: 10px auto;
+            width: 450px;
+        }
+
+
+        #guess{
+            padding: 5px;
+            width: 150px;
+            margin: 10px auto;
+            text-align: center;
+        }
+
+        .none {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <h1>el juego del ahorcado</h1>
+        <h2></h2>
+        <input type="text" id="guess" placeholder="introduce una letra" maxlength="1" minlength="1" required>
+        <input type="submit" id="evaluate" value="comprobar">
+        <input type="submit" id="reset" value="reset" class="none">
+        <div class="none"></div>
+        <h3></h3>
+    </div>
+    <script>
+
+        const myWords = ['apple', 'orange', 'blue', 'red', 'banana', 'melocoton', 'cheese', 'chocolate', 'tomato', 'strawberry'];
+        const input = document.querySelector('#guess');
+        const button = document.querySelector('#evaluate');
+        const resetButton = document.querySelector('#reset');
+        const colgado = document.querySelector('#container div');
+        const text = document.querySelector('h3');
+        let randomWord = '';
+        let guessMyWord = '';
+        let counter = 0;
+        let suma = 0;
+
+        const initialize = _ => {
+            counter = 0;
+            suma = 0;
+            //pegamos este codigo para poder usar el metodo replaceAt
+            String.prototype.replaceAt = function (index, character) { return this.substr(0, index) + character + this.substr(index + character.length); }
+            //escogemos un numero aleatorio, de 0 al largo del array de palabras
+            let numRandomWord = Math.floor(Math.random() * myWords.length);
+            console.log(numRandomWord);
+            //segun el numero que nos haya salido escogemos una palabra del array
+            randomWord = myWords[numRandomWord];
+            console.log(randomWord);
+            //sustituimos todas las letras por guiones
+            guessMyWord = randomWord.replace(/./g, "_ ");
+            console.log(guessMyWord.length);
+            document.querySelector('h2').innerHTML = guessMyWord;
+        }
+
+        const evaluate = _ => {
+            //es la letra que yo escojo
+            let myChoice = input.value;
+            //vamos a averiguar qual es la posicion de la letra dentro de la palabra
+            let firstPosition = randomWord.indexOf(myChoice);
+            console.log(myChoice);
+            console.log(`La primera posición es ${firstPosition}`);
+            // esta función se encarga de comprovar si la letra puesta en el input coincide con alguna o algunas letras de la palabra escogida al azar
+            comprovar(myChoice, firstPosition);
+            input.value = '';
+            console.log(`el contador es ${counter}`);
+            document.querySelector('h2').innerHTML = guessMyWord;
+        }
+
+        const comprovar = (theValue, thePos) => {
+            // si devuelve un resultado diferente a -1 es decir que contiene la letra
+            if (thePos != -1) {
+                console.log('contiene la letra');
+                //sustituimos la letra por la primera posición que encontramos
+                guessMyWord = guessMyWord.replaceAt(thePos * 2, theValue);
+                // vamos a asegurarnos que no haya mas de una letra,  para asegurarnos vamos a hacer 5 iteraciones
+                for (let i = 0; i < 5; i++) {
+                    //hacemos un if buscando si hay otra letra partiendo de la ultima posicion, si la encuentra sera diferente de -1
+                    if (randomWord.indexOf(theValue, thePos + 1) != -1) {
+                        thePos = randomWord.indexOf(theValue, thePos + 1);
+                        console.log(`La nueva posición es ${thePos}`);
+                        guessMyWord = guessMyWord.replaceAt(thePos * 2, theValue);
+                    } else {
+                        //en caso de que no encuentre ninguna coincidencia saldra del bucle
+                        break;
+                    }
+                }
+                if (guessMyWord.indexOf('_') === -1) {
+                    youWin();
+                }
+            } else {
+                console.log('no contiene la letra');
+                removeNone(colgado);
+                counter++;
+                if (counter > 1) {
+                    suma += -200;
+                    console.log(suma);
+                    colgado.style.backgroundPosition = `${suma}px`;
+                    if (counter === 5) {
+                        gameOver();
+                    }
+                }
+            }
+        }
+
+        const youWin = _ => {
+            text.textContent = 'you have guessed the word';
+            addNone();
+            removeNone(resetButton);
+        }
+
+        const gameOver = _ => {
+            text.textContent = 'game over';
+            addNone();
+            removeNone(resetButton);
+        }
+
+        const addNone = _ => {
+            input.classList.add('none');
+            button.classList.add('none');
+        }
+
+        const removeNone = tag => {
+            tag.classList.remove('none');
+        }
+
+        //esta función resetea el juego
+        const reset = _ => {
+            removeNone(button);
+            removeNone(input);
+            resetButton.classList.add('none');
+            counter = 0;
+            suma = 0;
+            text.textContent = '';
+colgado.style.backgroundPosition = '';
+            initialize();
+            colgado.classList.add('none');
+          
+        }
+
+        addEventListener('load', initialize);
+        button.addEventListener('click', evaluate);
+        resetButton.addEventListener('click', reset);
+
+    </script>
+
+</body>
+
+</html>
